@@ -64,32 +64,65 @@ def adjust_for_insurance(
 
 def calculate_complete_fair_value(
     on_road_price: float,
-    total_depreciation: float,
+    basic_depreciation: float,
+    advanced_depreciation: float,
     insurance_valid: bool,
     ex_showroom: float,
+    use_advanced: bool = False,
 ) -> dict:
     """
-    Calculate complete fair value with all adjustments.
+    Calculate complete fair value with both basic and advanced calculations.
 
     Returns dict with:
-    - base_fair_value: Before insurance adjustment
-    - insurance_deduction: Amount deducted for expired insurance
-    - fair_value: Final fair value
-    - fair_value_min: Lower bound of range
-    - fair_value_max: Upper bound of range
+    - Basic formula values (video formula)
+    - Advanced values (with edge case adjustments)
+    - Insurance deduction
+    - Selected fair value based on use_advanced flag
     """
-    base_fair_value = calculate_fair_value(on_road_price, total_depreciation)
-
-    adjusted_value, insurance_deduction = adjust_for_insurance(
-        base_fair_value, insurance_valid, ex_showroom
+    # Calculate BASIC fair value (video formula)
+    basic_fair_value = calculate_fair_value(on_road_price, basic_depreciation)
+    basic_adjusted, insurance_deduction = adjust_for_insurance(
+        basic_fair_value, insurance_valid, ex_showroom
     )
+    basic_min, basic_max = calculate_fair_value_range(basic_adjusted)
 
-    min_value, max_value = calculate_fair_value_range(adjusted_value)
+    # Calculate ADVANCED fair value (with edge case adjustments)
+    advanced_fair_value = calculate_fair_value(on_road_price, advanced_depreciation)
+    advanced_adjusted, _ = adjust_for_insurance(
+        advanced_fair_value, insurance_valid, ex_showroom
+    )
+    advanced_min, advanced_max = calculate_fair_value_range(advanced_adjusted)
+
+    # Select which value to use as primary
+    if use_advanced:
+        primary_value = advanced_adjusted
+        primary_min = advanced_min
+        primary_max = advanced_max
+    else:
+        primary_value = basic_adjusted
+        primary_min = basic_min
+        primary_max = basic_max
 
     return {
-        "base_fair_value": base_fair_value,
+        # Basic formula results
+        "basic_fair_value": basic_fair_value,
+        "basic_adjusted": basic_adjusted,
+        "basic_min": basic_min,
+        "basic_max": basic_max,
+        # Advanced formula results
+        "advanced_fair_value": advanced_fair_value,
+        "advanced_adjusted": advanced_adjusted,
+        "advanced_min": advanced_min,
+        "advanced_max": advanced_max,
+        # Difference between basic and advanced
+        "adjustment_difference": basic_adjusted - advanced_adjusted,
+        # Insurance
         "insurance_deduction": insurance_deduction,
-        "fair_value": adjusted_value,
-        "fair_value_min": min_value,
-        "fair_value_max": max_value,
+        # Primary values (selected based on use_advanced)
+        "fair_value": primary_value,
+        "fair_value_min": primary_min,
+        "fair_value_max": primary_max,
+        "using_advanced": use_advanced,
+        # Legacy compatibility
+        "base_fair_value": basic_fair_value if not use_advanced else advanced_fair_value,
     }

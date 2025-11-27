@@ -9,6 +9,7 @@ from .validators import (
     validate_km,
     validate_inputs,
 )
+from .pdf_generator import generate_valuation_report
 
 __all__ = [
     "format_currency",
@@ -18,4 +19,5 @@ __all__ = [
     "validate_ex_showroom",
     "validate_km",
     "validate_inputs",
+    "generate_valuation_report",
 ]

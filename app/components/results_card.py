@@ -21,6 +21,8 @@ def render_results_card(
     asking_price: float,
     verdict_data: dict,
     negotiation_target: float,
+    fair_value_data: dict = None,
+    use_advanced: bool = False,
 ) -> None:
     """
     Render the main results card.
@@ -32,19 +34,68 @@ def render_results_card(
         asking_price: Seller's asking price
         verdict_data: Dict with verdict, emoji, color, difference_percent, difference_amount
         negotiation_target: Suggested price to negotiate to
+        fair_value_data: Full fair value data with basic and advanced values
+        use_advanced: Whether advanced options were used
     """
     st.subheader("Valuation Results")
 
-    # Main fair value display
-    st.metric(
-        label="Fair Market Value",
-        value=format_currency_lakhs(fair_value),
-        help=f"Range: {format_currency_lakhs(fair_value_min)} - {format_currency_lakhs(fair_value_max)}",
-    )
+    # Show comparison if advanced options were used
+    if use_advanced and fair_value_data:
+        st.caption("Showing both Basic (video formula) and Advanced (with edge cases) values")
 
-    st.caption(
-        f"Fair Value Range: {format_currency_lakhs(fair_value_min)} - {format_currency_lakhs(fair_value_max)}"
-    )
+        col_basic, col_advanced = st.columns(2)
+
+        with col_basic:
+            st.markdown("**Basic Formula**")
+            st.metric(
+                label="Fair Value (Basic)",
+                value=format_currency_lakhs(fair_value_data["basic_adjusted"]),
+                help="Standard formula from videos: Life Dep + Owner Premium + Mileage",
+            )
+            st.caption(
+                f"Range: {format_currency_lakhs(fair_value_data['basic_min'])} - "
+                f"{format_currency_lakhs(fair_value_data['basic_max'])}"
+            )
+
+        with col_advanced:
+            st.markdown("**With Edge Cases**")
+            adjustment_diff = fair_value_data["adjustment_difference"]
+            delta_str = format_currency_lakhs(abs(adjustment_diff))
+            if adjustment_diff > 0:
+                delta_display = f"-{delta_str}"  # Advanced is lower
+            elif adjustment_diff < 0:
+                delta_display = f"+{delta_str}"  # Advanced is higher
+            else:
+                delta_display = None
+
+            st.metric(
+                label="Fair Value (Adjusted)",
+                value=format_currency_lakhs(fair_value_data["advanced_adjusted"]),
+                delta=delta_display,
+                delta_color="off",
+                help="Includes brand, transmission, condition adjustments",
+            )
+            st.caption(
+                f"Range: {format_currency_lakhs(fair_value_data['advanced_min'])} - "
+                f"{format_currency_lakhs(fair_value_data['advanced_max'])}"
+            )
+
+        st.info(
+            f"**Using Advanced Value** for verdict. "
+            f"Edge case adjustments: {format_currency_lakhs(abs(adjustment_diff))} "
+            f"{'lower' if adjustment_diff > 0 else 'higher'} than basic."
+        )
+    else:
+        # Standard single value display (basic formula)
+        st.metric(
+            label="Fair Market Value",
+            value=format_currency_lakhs(fair_value),
+            help=f"Range: {format_currency_lakhs(fair_value_min)} - {format_currency_lakhs(fair_value_max)}",
+        )
+
+        st.caption(
+            f"Fair Value Range: {format_currency_lakhs(fair_value_min)} - {format_currency_lakhs(fair_value_max)}"
+        )
 
     st.divider()
 

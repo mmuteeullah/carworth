@@ -1,4 +1,20 @@
-"""Depreciation calculation module."""
+"""Depreciation calculation module.
+
+Basic Formula (from YouTube videos - works for 80% of cases):
+    Total Depreciation = Life Depreciation + Ownership Premium + Mileage Adjustment
+
+    Where:
+    - Life Depreciation = Age / 15 years (or Age / 10 for Diesel in NCR)
+    - Ownership Premium = 10% (1st) / 15% (2nd) / 20% (3rd) / 30% (4th+)
+    - Mileage Adjustment = +2% if slightly high, +5% if high
+
+Advanced Adjustments (edge cases for special situations):
+    - Brand Multiplier: Maruti/Toyota 0.85x, Skoda/VW 1.15x, Luxury 1.25x
+    - Transmission: DCT/DSG +5%, AMT +2%
+    - Condition: Body, Accident history, Service history
+    - Commercial use: +15%
+    - New generation available: +5%
+"""
 
 from app.data.road_tax import is_ncr_state
 from app.data.brands import get_brand_multiplier
@@ -31,12 +47,12 @@ def calculate_life_depreciation(
     year: int,
     fuel_type: str,
     state: str,
-) -> tuple[float, int]:
+) -> tuple[float, int, int]:
     """
     Calculate life-based depreciation.
 
     Returns:
-        tuple: (depreciation_rate, car_age)
+        tuple: (depreciation_rate, car_age, life_years_used)
     """
     age = CURRENT_YEAR - year
 
@@ -48,7 +64,7 @@ def calculate_life_depreciation(
 
     depreciation = age / life_years
 
-    return depreciation, age
+    return depreciation, age, life_years
 
 
 def calculate_ownership_premium(owner_number: int) -> float:
@@ -80,10 +96,17 @@ def calculate_mileage_adjustment(km: int, age: int) -> tuple[float, str]:
         return 0.0, "normal"
 
 
-def apply_brand_multiplier(base_depreciation: float, brand: str) -> float:
-    """Apply brand-specific multiplier to depreciation."""
+def calculate_brand_adjustment(life_dep: float, brand: str) -> tuple[float, float]:
+    """
+    Calculate brand-based adjustment to life depreciation.
+
+    Returns:
+        tuple: (adjustment_amount, multiplier)
+    """
     multiplier = get_brand_multiplier(brand)
-    return base_depreciation * multiplier
+    # Adjustment is the difference from applying multiplier
+    adjustment = life_dep * (multiplier - 1.0)
+    return adjustment, multiplier
 
 
 def calculate_transmission_adjustment(transmission: str) -> float:
@@ -136,21 +159,29 @@ def calculate_total_depreciation(
     """
     Calculate total depreciation with full breakdown.
 
-    Returns dict with all components and final depreciation rate.
+    Separates Basic (video formula) vs Advanced (edge case) adjustments.
+
+    Returns dict with all components and final depreciation rates.
     """
     owner_number = get_owner_number(owner)
 
+    # === BASIC FORMULA (from videos) ===
     # Life depreciation
-    life_dep, age = calculate_life_depreciation(year, fuel_type, state)
-
-    # Apply brand multiplier to life depreciation
-    branded_life_dep = apply_brand_multiplier(life_dep, brand)
+    life_dep, age, life_years = calculate_life_depreciation(year, fuel_type, state)
 
     # Ownership premium
     ownership_dep = calculate_ownership_premium(owner_number)
 
     # Mileage adjustment
     mileage_adj, mileage_status = calculate_mileage_adjustment(km, age)
+
+    # Basic total (the "video formula")
+    basic_total = life_dep + ownership_dep + mileage_adj
+    basic_capped = min(basic_total, MAX_DEPRECIATION)
+
+    # === ADVANCED ADJUSTMENTS (edge cases) ===
+    # Brand adjustment
+    brand_adj, brand_multiplier = calculate_brand_adjustment(life_dep, brand)
 
     # Transmission adjustment
     transmission_adj = calculate_transmission_adjustment(transmission)
@@ -164,29 +195,35 @@ def calculate_total_depreciation(
         new_gen_available=new_gen_available,
     )
 
-    # Total depreciation (before cap)
-    total_raw = (
-        branded_life_dep
-        + ownership_dep
-        + mileage_adj
-        + transmission_adj
-        + condition["total"]
-    )
-
-    # Apply cap
-    total_capped = min(total_raw, MAX_DEPRECIATION)
+    # Advanced total = basic + all edge case adjustments
+    advanced_adjustments = brand_adj + transmission_adj + condition["total"]
+    advanced_total = basic_total + advanced_adjustments
+    advanced_capped = min(advanced_total, MAX_DEPRECIATION)
 
     return {
         "age": age,
+        "life_years": life_years,
+        # Basic formula components
         "life_depreciation": life_dep,
-        "brand_multiplier": get_brand_multiplier(brand),
-        "branded_life_depreciation": branded_life_dep,
         "ownership_premium": ownership_dep,
         "mileage_adjustment": mileage_adj,
         "mileage_status": mileage_status,
+        # Basic totals
+        "basic_total": basic_total,
+        "basic_capped": basic_capped,
+        "basic_is_capped": basic_total > MAX_DEPRECIATION,
+        # Advanced adjustments
+        "brand_adjustment": brand_adj,
+        "brand_multiplier": brand_multiplier,
         "transmission_adjustment": transmission_adj,
         "condition_adjustments": condition,
-        "total_raw": total_raw,
-        "total_capped": total_capped,
-        "is_capped": total_raw > MAX_DEPRECIATION,
+        # Advanced totals
+        "advanced_adjustments_total": advanced_adjustments,
+        "advanced_total": advanced_total,
+        "advanced_capped": advanced_capped,
+        "advanced_is_capped": advanced_total > MAX_DEPRECIATION,
+        # Legacy fields for backward compatibility
+        "total_raw": advanced_total,
+        "total_capped": advanced_capped,
+        "is_capped": advanced_total > MAX_DEPRECIATION,
     }
