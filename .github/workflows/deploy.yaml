@@ -1,0 +1,88 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PROJECT_ID: lineten
+  REGION: us-east1
+  ZONE: us-east1-b
+  REPOSITORY: lineten-dev
+  IMAGE: carworth
+  CLUSTER: lineten-cluster-dev
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.build.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP (WIF)
+        if: github.event_name == 'push'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Configure Docker
+        if: github.event_name == 'push'
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and push
+        if: github.event_name == 'push'
+        id: build
+        run: |
+          TAG=${{ github.sha }}
+          IMAGE_URL=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}
+          docker build -t $IMAGE_URL:$TAG .
+          docker push $IMAGE_URL:$TAG
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout kubernetes repo
+        uses: actions/checkout@v4
+        with:
+          repository: mmuteeullah/kubernetes
+          token: ${{ secrets.REPO_TOKEN }}
+
+      - name: Authenticate to GCP (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.CLUSTER }}
+          location: ${{ env.ZONE }}
+
+      - name: Update image tag
+        run: |
+          cd apps/carworth/overlays/dev
+          IMAGE_URL=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}
+          sed -i "s|newTag:.*|newTag: ${{ needs.build.outputs.image_tag }}|" kustomization.yaml
+
+      - name: Deploy
+        run: |
+          kubectl apply -k apps/carworth/overlays/dev
+          kubectl rollout status deployment/carworth -n carworth --timeout=300s
