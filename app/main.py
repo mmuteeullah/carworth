@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
+import streamlit_shadcn_ui as ui
 
 from app.config import APP_TITLE, APP_DESCRIPTION, PAGE_LAYOUT
 from app.components.input_form import render_input_form, render_comparison_form
@@ -149,17 +150,16 @@ def main():
 
     st.divider()
 
-    # Mode toggle
-    mode = st.radio(
-        "Mode",
+    # Mode toggle using shadcn tabs
+    mode = ui.tabs(
         options=["Single Car", "Compare Two Cars"],
-        horizontal=True,
+        default_value="Single Car",
         key="mode_selector",
     )
 
     comparison_mode = mode == "Compare Two Cars"
 
-    st.divider()
+    st.markdown("")  # Spacer
 
     if comparison_mode:
         # Comparison mode
@@ -310,7 +310,7 @@ def main():
     # Footer
     st.divider()
     st.caption(
-        "CarWorth v1.1 | "
+        "CarWorth v2.0 | "
         "For informational purposes only | "
         "Always verify before purchase"
     )

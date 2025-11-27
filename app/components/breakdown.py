@@ -1,6 +1,7 @@
-"""Calculation breakdown component."""
+"""Calculation breakdown component with modern styling."""
 
 import streamlit as st
+import streamlit_shadcn_ui as ui
 from app.utils.formatters import (
     format_currency,
     format_currency_lakhs,
@@ -9,209 +10,309 @@ from app.utils.formatters import (
 )
 
 
+def _render_row(label: str, value: str, is_total: bool = False) -> None:
+    """Render a single breakdown row."""
+    if is_total:
+        st.markdown(
+            f"""
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                padding: 12px 0;
+                border-top: 2px solid #4a5568;
+                margin-top: 8px;
+            ">
+                <span style="font-weight: 700; color: #f3f4f6;">{label}</span>
+                <span style="font-weight: 700; color: #60a5fa;">{value}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            f"""
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 0;
+                border-bottom: 1px solid #374151;
+            ">
+                <span style="color: #d1d5db;">{label}</span>
+                <span style="color: #f3f4f6;">{value}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
 def render_breakdown(
     on_road_data: dict,
     depreciation_data: dict,
     fair_value_data: dict,
 ) -> None:
     """
-    Render detailed calculation breakdown.
+    Render detailed calculation breakdown with modern accordion style.
 
     Args:
         on_road_data: Dict from calculate_on_road_price()
         depreciation_data: Dict from calculate_total_depreciation()
         fair_value_data: Dict from calculate_complete_fair_value()
     """
-    st.subheader("Calculation Breakdown")
+    st.markdown("### 📐 Calculation Breakdown")
 
     use_advanced = fair_value_data.get("using_advanced", False)
 
-    # On-Road Price Section
-    with st.expander("Step 1: On-Road Price Calculation", expanded=True):
-        st.markdown("**Original On-Road Price Components:**")
+    # Step 1: On-Road Price
+    with st.expander("Step 1: On-Road Price Calculation", expanded=False):
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #1e3a5f 0%, #172554 100%);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+            ">
+                <span style="color: #93c5fd; font-size: 0.9rem;">
+                    Original on-road price when car was new
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         road_tax_rate = on_road_data["road_tax_rate"]
-        data = [
-            ("Ex-Showroom Price", on_road_data["ex_showroom"]),
-            (f"Road Tax ({format_percentage(road_tax_rate)})", on_road_data["road_tax"]),
-            ("Insurance (Estimated)", on_road_data["insurance"]),
-            ("Fixed Charges (Reg + HSRP + FasTag)", on_road_data["fixed_charges"]),
-        ]
 
-        for label, value in data:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.text(label)
-            with col2:
-                st.text(format_currency_lakhs(value))
+        _render_row("Ex-Showroom Price", format_currency_lakhs(on_road_data["ex_showroom"]))
+        _render_row(f"Road Tax ({format_percentage(road_tax_rate)})", format_currency_lakhs(on_road_data["road_tax"]))
+        _render_row("Insurance (Estimated)", format_currency_lakhs(on_road_data["insurance"]))
+        _render_row("Fixed Charges (Reg + HSRP + FasTag)", format_currency_lakhs(on_road_data["fixed_charges"]))
+        _render_row("Total On-Road Price", format_currency_lakhs(on_road_data["on_road_price"]), is_total=True)
 
-        st.divider()
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Total On-Road Price**")
-        with col2:
-            st.markdown(f"**{format_currency_lakhs(on_road_data['on_road_price'])}**")
-
-        # Road tax disclaimer - different message for custom vs default
+        # Road tax note
         is_custom_rate = on_road_data.get("is_custom_rate", False)
         if is_custom_rate:
             default_rate = on_road_data.get("default_road_tax_rate", road_tax_rate)
-            st.success(
-                f"Using **custom road tax rate: {format_percentage(road_tax_rate)}** "
-                f"(Default for this state: {format_percentage(default_rate)})"
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: rgba(34, 197, 94, 0.1);
+                    border-left: 3px solid #22c55e;
+                    padding: 8px 12px;
+                    margin-top: 12px;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                    color: #86efac;
+                ">
+                    ✓ Using custom rate: {format_percentage(road_tax_rate)} (Default: {format_percentage(default_rate)})
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
         else:
-            st.warning(
-                f"Road tax rate used: **{format_percentage(road_tax_rate)}** "
-                f"(Static data from 2024-25 government sources. "
-                f"Actual rates may vary. Verify with your local RTO.)"
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: rgba(245, 158, 11, 0.1);
+                    border-left: 3px solid #f59e0b;
+                    padding: 8px 12px;
+                    margin-top: 12px;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                    color: #fcd34d;
+                ">
+                    ⚠️ Road tax: {format_percentage(road_tax_rate)} (2024-25 data, verify with RTO)
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
-    # Depreciation Section
-    with st.expander("Step 2: Depreciation Calculation", expanded=True):
+    # Step 2: Depreciation
+    with st.expander("Step 2: Depreciation Calculation", expanded=False):
         age = depreciation_data["age"]
         life_years = depreciation_data.get("life_years", 15)
 
-        # Basic Formula Section
-        st.markdown("**Basic Formula** (Life + Ownership + Mileage)")
-        st.caption(f"Life Depreciation = Age / {life_years} years")
+        st.markdown(
+            f"""
+            <div style="
+                background: linear-gradient(135deg, #7c2d12 0%, #431407 100%);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+            ">
+                <span style="color: #fed7aa; font-size: 0.9rem;">
+                    Life Depreciation = Age / {life_years} years
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        basic_data = [
-            (f"Life Depreciation ({age} yrs / {life_years} yrs)", depreciation_data["life_depreciation"]),
-            ("Ownership Premium", depreciation_data["ownership_premium"]),
-            ("Mileage Adjustment", depreciation_data["mileage_adjustment"]),
-        ]
+        st.markdown("**Basic Formula**")
+        _render_row(f"Life Depreciation ({age} yrs / {life_years} yrs)", format_percentage(depreciation_data["life_depreciation"]))
+        _render_row("Ownership Premium", format_percentage(depreciation_data["ownership_premium"]))
+        _render_row("Mileage Adjustment", format_percentage(depreciation_data["mileage_adjustment"]))
 
-        for label, value in basic_data:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.text(label)
-            with col2:
-                st.text(format_percentage(value))
+        basic_label = "Basic Total"
+        if depreciation_data.get("basic_is_capped"):
+            basic_label += " (Capped at 85%)"
+        _render_row(basic_label, format_percentage(depreciation_data["basic_capped"]), is_total=True)
 
-        # Basic total
-        st.divider()
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            basic_label = "**Basic Total**"
-            if depreciation_data.get("basic_is_capped"):
-                basic_label += " (Capped at 85%)"
-            st.markdown(basic_label)
-        with col2:
-            st.markdown(f"**{format_percentage(depreciation_data['basic_capped'])}**")
-
-        # Advanced adjustments (if used)
+        # Advanced adjustments
         if use_advanced:
-            st.divider()
-            st.markdown("**Edge Case Adjustments** (Advanced)")
+            st.markdown("")  # Spacer
+            st.markdown("**Edge Case Adjustments**")
 
             brand_mult = depreciation_data["brand_multiplier"]
-            advanced_data = []
+            cond = depreciation_data["condition_adjustments"]
 
-            # Only show non-zero adjustments
             if depreciation_data["brand_adjustment"] != 0:
-                advanced_data.append((f"Brand Adjustment (x{brand_mult:.2f})", depreciation_data["brand_adjustment"]))
+                _render_row(f"Brand Adjustment (x{brand_mult:.2f})", format_percentage(depreciation_data["brand_adjustment"]))
 
             if depreciation_data["transmission_adjustment"] != 0:
-                advanced_data.append(("Transmission Risk", depreciation_data["transmission_adjustment"]))
+                _render_row("Transmission Risk", format_percentage(depreciation_data["transmission_adjustment"]))
 
-            cond = depreciation_data["condition_adjustments"]
             if cond["body"] != 0:
-                advanced_data.append(("Body Condition", cond["body"]))
+                _render_row("Body Condition", format_percentage(cond["body"]))
             if cond["accident"] != 0:
-                advanced_data.append(("Accident History", cond["accident"]))
+                _render_row("Accident History", format_percentage(cond["accident"]))
             if cond["service"] != 0:
-                advanced_data.append(("Service History", cond["service"]))
+                _render_row("Service History", format_percentage(cond["service"]))
             if cond["commercial"] != 0:
-                advanced_data.append(("Commercial Use", cond["commercial"]))
+                _render_row("Commercial Use", format_percentage(cond["commercial"]))
             if cond["new_gen"] != 0:
-                advanced_data.append(("New Gen Available", cond["new_gen"]))
+                _render_row("New Gen Available", format_percentage(cond["new_gen"]))
 
-            if advanced_data:
-                for label, value in advanced_data:
-                    col1, col2 = st.columns([3, 1])
-                    with col1:
-                        st.text(label)
-                    with col2:
-                        st.text(format_percentage(value))
+            adv_label = "Advanced Total"
+            if depreciation_data.get("advanced_is_capped"):
+                adv_label += " (Capped at 85%)"
+            _render_row(adv_label, format_percentage(depreciation_data["advanced_capped"]), is_total=True)
 
-            # Advanced total
-            st.divider()
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                adv_label = "**Advanced Total**"
-                if depreciation_data.get("advanced_is_capped"):
-                    adv_label += " (Capped at 85%)"
-                st.markdown(adv_label)
-            with col2:
-                st.markdown(f"**{format_percentage(depreciation_data['advanced_capped'])}**")
-
-            # Show difference
+            # Difference
             diff = depreciation_data["advanced_capped"] - depreciation_data["basic_capped"]
             if diff != 0:
-                st.caption(
-                    f"Edge case adjustments add {format_percentage(abs(diff))} "
-                    f"{'more' if diff > 0 else 'less'} depreciation"
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: rgba(99, 102, 241, 0.1);
+                        border-radius: 6px;
+                        padding: 8px 12px;
+                        margin-top: 12px;
+                        font-size: 0.85rem;
+                        color: #a5b4fc;
+                        text-align: center;
+                    ">
+                        Edge cases add {format_percentage(abs(diff))} {'more' if diff > 0 else 'less'} depreciation
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
-    # Fair Value Section
-    with st.expander("Step 3: Fair Value Calculation", expanded=True):
+    # Step 3: Fair Value
+    with st.expander("Step 3: Fair Value Calculation", expanded=False):
         on_road = on_road_data["on_road_price"]
 
-        if use_advanced:
-            st.markdown("**Comparison: Basic vs Advanced**")
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(135deg, #065f46 0%, #064e3b 100%);
+                border-radius: 8px;
+                padding: 12px 16px;
+                margin-bottom: 16px;
+            ">
+                <span style="color: #a7f3d0; font-size: 0.9rem;">
+                    Fair Value = On-Road × (1 - Depreciation)
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
+        if use_advanced:
             col_b, col_a = st.columns(2)
 
             with col_b:
-                st.markdown("*Basic Formula*")
                 basic_dep = depreciation_data["basic_capped"]
-                st.text(f"On-Road x (1 - {format_percentage(basic_dep)})")
-                st.text(f"= {format_currency_lakhs(fair_value_data['basic_adjusted'])}")
+                st.markdown("**Basic Formula**")
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: #1f2937;
+                        border-radius: 8px;
+                        padding: 12px;
+                        text-align: center;
+                    ">
+                        <div style="color: #9ca3af; font-size: 0.8rem;">
+                            {format_currency_lakhs(on_road)} × (1 - {format_percentage(basic_dep)})
+                        </div>
+                        <div style="color: #f3f4f6; font-size: 1.2rem; font-weight: 600; margin-top: 4px;">
+                            = {format_currency_lakhs(fair_value_data['basic_adjusted'])}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
             with col_a:
-                st.markdown("*With Edge Cases*")
                 adv_dep = depreciation_data["advanced_capped"]
-                st.text(f"On-Road x (1 - {format_percentage(adv_dep)})")
-                st.text(f"= {format_currency_lakhs(fair_value_data['advanced_adjusted'])}")
-
-            st.divider()
-            st.info("Using **Advanced Value** (with edge case adjustments)")
-
+                st.markdown("**With Edge Cases**")
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: #1e3a5f;
+                        border-radius: 8px;
+                        padding: 12px;
+                        text-align: center;
+                    ">
+                        <div style="color: #93c5fd; font-size: 0.8rem;">
+                            {format_currency_lakhs(on_road)} × (1 - {format_percentage(adv_dep)})
+                        </div>
+                        <div style="color: #f3f4f6; font-size: 1.2rem; font-weight: 600; margin-top: 4px;">
+                            = {format_currency_lakhs(fair_value_data['advanced_adjusted'])}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
         else:
-            st.markdown("**Final Calculation:**")
             dep_rate = depreciation_data["basic_capped"]
-
             st.markdown(
-                f"Fair Value = On-Road Price x (1 - Depreciation)  \n"
-                f"Fair Value = {format_currency_lakhs(on_road)} x (1 - {format_percentage(dep_rate)})  \n"
-                f"Fair Value = {format_currency_lakhs(on_road)} x {1 - dep_rate:.2f}"
+                f"""
+                <div style="
+                    background-color: #1f2937;
+                    border-radius: 8px;
+                    padding: 16px;
+                    text-align: center;
+                ">
+                    <div style="color: #9ca3af; font-size: 0.9rem;">
+                        {format_currency_lakhs(on_road)} × (1 - {format_percentage(dep_rate)}) = {format_currency_lakhs(on_road)} × {1 - dep_rate:.2f}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
-        st.divider()
+        st.markdown("")  # Spacer
 
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.text("Base Fair Value")
-        with col2:
-            st.text(format_currency_lakhs(fair_value_data["base_fair_value"]))
+        _render_row("Base Fair Value", format_currency_lakhs(fair_value_data["base_fair_value"]))
 
         if fair_value_data["insurance_deduction"] > 0:
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.text("Insurance Deduction (Expired)")
-            with col2:
-                st.text(f"- {format_currency_lakhs(fair_value_data['insurance_deduction'])}")
+            _render_row("Insurance Deduction (Expired)", f"- {format_currency_lakhs(fair_value_data['insurance_deduction'])}")
 
-        st.divider()
+        _render_row("Final Fair Value", format_currency_lakhs(fair_value_data["fair_value"]), is_total=True)
 
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown("**Final Fair Value**")
-        with col2:
-            st.markdown(f"**{format_currency_lakhs(fair_value_data['fair_value'])}**")
-
-        st.caption(
-            f"Fair Value Range: {format_currency_lakhs(fair_value_data['fair_value_min'])} "
-            f"- {format_currency_lakhs(fair_value_data['fair_value_max'])} (+/- 5%)"
+        st.markdown(
+            f"""
+            <div style="
+                background-color: rgba(59, 130, 246, 0.1);
+                border-radius: 6px;
+                padding: 8px 12px;
+                margin-top: 12px;
+                font-size: 0.85rem;
+                color: #93c5fd;
+                text-align: center;
+            ">
+                Range: {format_currency_lakhs(fair_value_data['fair_value_min'])} - {format_currency_lakhs(fair_value_data['fair_value_max'])} (±5%)
+            </div>
+            """,
+            unsafe_allow_html=True,
         )

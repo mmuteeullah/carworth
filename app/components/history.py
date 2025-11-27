@@ -44,7 +44,7 @@ def add_to_history(inputs: dict, fair_value: float, verdict: str):
 
 
 def render_history():
-    """Render the history section."""
+    """Render the history section with clean styling."""
     init_history()
 
     history = st.session_state["valuation_history"]
@@ -53,40 +53,53 @@ def render_history():
         st.caption("No recent valuations. History will appear here after you calculate a car's value.")
         return
 
-    st.markdown("**Recent Valuations (this session)**")
+    st.markdown("**Recent Valuations** (this session)")
 
     for i, entry in enumerate(history):
         # Color based on verdict
         if entry["verdict"] in ["Great Deal", "Good Deal"]:
-            color = "green"
+            verdict_color = "green"
         elif entry["verdict"] in ["Overpriced"]:
-            color = "red"
+            verdict_color = "red"
         else:
-            color = "orange"
+            verdict_color = "orange"
 
         with st.expander(
             f"{entry['year']} {entry['fuel_type']} - {entry['verdict']}",
-            expanded=(i == 0),  # Most recent expanded
+            expanded=(i == 0),
         ):
+            # Use columns for layout instead of HTML
+            st.caption(f"🕐 {entry['timestamp']}")
+
             col1, col2 = st.columns(2)
 
             with col1:
-                st.caption(f"Calculated: {entry['timestamp']}")
-                st.text(f"Ex-Showroom: {format_currency_lakhs(entry['ex_showroom'])}")
-                st.text(f"Kilometers: {entry['km']:,} km")
-                st.text(f"State: {entry['state']}")
+                st.metric(
+                    label="Ex-Showroom",
+                    value=format_currency_lakhs(entry["ex_showroom"]),
+                )
+                st.metric(
+                    label="Kilometers",
+                    value=f"{entry['km']:,} km",
+                )
 
             with col2:
-                st.text(f"Asking Price: {format_currency_lakhs(entry['asking_price'])}")
-                st.text(f"Fair Value: {format_currency_lakhs(entry['fair_value'])}")
+                st.metric(
+                    label="Asking Price",
+                    value=format_currency_lakhs(entry["asking_price"]),
+                )
+                st.metric(
+                    label="Fair Value",
+                    value=format_currency_lakhs(entry["fair_value"]),
+                )
 
-                # Verdict with color
-                if color == "green":
-                    st.success(entry["verdict"])
-                elif color == "red":
-                    st.error(entry["verdict"])
-                else:
-                    st.warning(entry["verdict"])
+            # Verdict and state
+            if verdict_color == "green":
+                st.success(f"**{entry['verdict']}** | 📍 {entry['state']}")
+            elif verdict_color == "red":
+                st.error(f"**{entry['verdict']}** | 📍 {entry['state']}")
+            else:
+                st.warning(f"**{entry['verdict']}** | 📍 {entry['state']}")
 
 
 def clear_history():

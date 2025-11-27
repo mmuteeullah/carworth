@@ -1,105 +1,211 @@
-/* CarWorth Custom Styles - Mobile First */
+/* CarWorth UI Redesign - shadcn inspired, Mobile First */
+
+/* CSS Variables for consistent theming */
+:root {
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --card: #1e293b;
+    --card-foreground: #f8fafc;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #334155;
+    --secondary-foreground: #f8fafc;
+    --muted: #334155;
+    --muted-foreground: #94a3b8;
+    --accent: #1e3a5f;
+    --accent-foreground: #f8fafc;
+    --destructive: #ef4444;
+    --border: #334155;
+    --ring: #3b82f6;
+    --radius: 12px;
+}
 
 /* Main container */
 .main .block-container {
     padding: 1rem !important;
     max-width: 100% !important;
+    background-color: var(--background);
 }
 
 /* Header styling */
 h1 {
-    font-size: 1.5rem !important;
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    color: var(--foreground) !important;
+    letter-spacing: -0.025em;
+}
+
+h2, h3 {
     font-weight: 700 !important;
+    color: var(--foreground) !important;
+}
+
+/* shadcn-ui iframe containers - fix sizing */
+iframe[title="streamlit_shadcn_ui.tabs.tabs"],
+iframe[title="streamlit_shadcn_ui.metric_card.metric_card"] {
+    min-height: 60px !important;
 }
 
 /* Card-like containers */
 div[data-testid="stVerticalBlock"] > div[style*="flex-direction: column"] {
-    background-color: #1E1E1E;
-    border-radius: 12px;
-    padding: 0.75rem;
-    margin: 0.25rem 0;
+    background-color: var(--card);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border: 1px solid var(--border);
 }
 
 /* Input fields - larger touch targets */
 .stNumberInput > div > div > input,
-.stSelectbox > div > div > div {
-    background-color: #262626;
-    border: 1px solid #3D3D3D;
-    border-radius: 8px;
-    min-height: 44px !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
+.stSelectbox > div > div > div,
+.stTextInput > div > div > input {
+    background-color: var(--secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    min-height: 48px !important;
+    font-size: 16px !important;
+    color: var(--foreground) !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.stNumberInput > div > div > input:focus,
+.stSelectbox > div > div > div:focus-within,
+.stTextInput > div > div > input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* Labels */
-.stSelectbox label, .stNumberInput label, .stCheckbox label {
+.stSelectbox label,
+.stNumberInput label,
+.stCheckbox label,
+.stTextInput label {
     font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    color: var(--muted-foreground) !important;
+    margin-bottom: 4px !important;
 }
 
-/* Primary button - full width on mobile */
+/* Primary button */
 .stButton > button {
     width: 100% !important;
-    min-height: 50px !important;
+    min-height: 52px !important;
     font-size: 1rem !important;
+    font-weight: 600 !important;
     border-radius: 10px !important;
-    margin: 0.5rem 0 !important;
+    margin: 0.75rem 0 !important;
+    transition: all 0.2s ease;
 }
 
 .stButton > button[kind="primary"] {
-    background-color: #4A9EFF;
-    color: white;
-    border: none;
-    font-weight: 600;
-    transition: background-color 0.2s;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
 }
 
 .stButton > button[kind="primary"]:hover,
 .stButton > button[kind="primary"]:active {
-    background-color: #3A8EEF;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
 }
 
-/* Metrics - compact for mobile */
+/* Secondary buttons */
+.stButton > button:not([kind="primary"]) {
+    background-color: var(--secondary) !important;
+    color: var(--foreground) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.stButton > button:not([kind="primary"]):hover {
+    background-color: var(--muted) !important;
+}
+
+/* Download button */
+.stDownloadButton > button {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+}
+
+.stDownloadButton > button:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+}
+
+/* Metrics - modern card style */
 div[data-testid="stMetric"] {
-    background-color: #262626;
-    border-radius: 8px;
-    padding: 0.75rem;
+    background-color: var(--card);
+    border-radius: var(--radius);
+    padding: 1rem;
+    border: 1px solid var(--border);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+div[data-testid="stMetric"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 div[data-testid="stMetricLabel"] {
-    font-size: 0.8rem !important;
+    font-size: 0.85rem !important;
+    color: var(--muted-foreground) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 div[data-testid="stMetricValue"] {
-    font-size: 1.4rem !important;
-    font-weight: 700;
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: var(--foreground) !important;
 }
 
 div[data-testid="stMetricDelta"] {
     font-size: 0.85rem !important;
 }
 
-/* Expander - easier to tap */
+/* Expander - modern accordion style */
 .streamlit-expanderHeader {
-    background-color: #262626;
-    border-radius: 8px;
-    min-height: 44px;
-    padding: 0.75rem !important;
+    background-color: var(--card) !important;
+    border-radius: 10px !important;
+    min-height: 48px;
+    padding: 0.75rem 1rem !important;
+    border: 1px solid var(--border) !important;
+    font-weight: 600 !important;
+    transition: background-color 0.2s;
+}
+
+.streamlit-expanderHeader:hover {
+    background-color: var(--secondary) !important;
 }
 
 .streamlit-expanderContent {
-    padding: 0.5rem !important;
+    background-color: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-top: none !important;
+    border-radius: 0 0 10px 10px !important;
+    padding: 1rem !important;
 }
 
 /* Divider */
 hr {
-    border-color: #3D3D3D;
-    margin: 1rem 0;
+    border-color: var(--border) !important;
+    margin: 1.25rem 0 !important;
+    opacity: 0.5;
 }
 
 /* Info/Warning/Error boxes */
 .stAlert {
-    border-radius: 8px;
-    padding: 0.75rem !important;
+    border-radius: 10px !important;
+    padding: 1rem !important;
     font-size: 0.9rem;
+    border-left: 4px solid;
+}
+
+div[data-testid="stAlert"][data-baseweb="notification"] {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-left-color: var(--primary) !important;
 }
 
 /* Checkbox - larger touch target */
@@ -112,6 +218,7 @@ hr {
     min-height: 44px;
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
 
 .stCheckbox > label > span {
@@ -120,16 +227,16 @@ hr {
 
 /* Caption text */
 .stCaption {
-    color: #B0B0B0;
-    font-size: 0.8rem !important;
+    color: var(--muted-foreground) !important;
+    font-size: 0.85rem !important;
 }
 
 /* Columns - reduce gap on mobile */
 div[data-testid="column"] {
-    padding: 0 0.25rem !important;
+    padding: 0 0.375rem !important;
 }
 
-/* Number input - hide spin buttons on mobile for cleaner look */
+/* Number input - hide spin buttons */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -138,12 +245,13 @@ input[type="number"]::-webkit-outer-spin-button {
 
 /* Custom verdict badge */
 .verdict-badge {
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
+    padding: 16px 24px !important;
+    border-radius: 12px !important;
     text-align: center;
-    font-size: 1.1rem !important;
-    font-weight: bold;
-    margin: 8px 0 !important;
+    font-size: 1.2rem !important;
+    font-weight: 700;
+    margin: 12px 0 !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 }
 
 /* Scrollable content */
@@ -151,14 +259,38 @@ input[type="number"]::-webkit-outer-spin-button {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Radio group (for any remaining native radios) */
+.stRadio > div {
+    gap: 0.5rem !important;
+}
+
+.stRadio > div > label {
+    background-color: var(--secondary) !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    border: 1px solid var(--border) !important;
+    transition: all 0.2s;
+}
+
+.stRadio > div > label:hover {
+    background-color: var(--muted) !important;
+}
+
+.stRadio > div > label[data-checked="true"] {
+    background-color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
 /* Desktop adjustments */
 @media (min-width: 768px) {
     .main .block-container {
-        padding: 2rem 3rem !important;
+        padding: 2rem 4rem !important;
+        max-width: 1200px !important;
+        margin: 0 auto;
     }
 
     h1 {
-        font-size: 2rem !important;
+        font-size: 2.25rem !important;
     }
 
     div[data-testid="stMetricValue"] {
@@ -166,22 +298,48 @@ input[type="number"]::-webkit-outer-spin-button {
     }
 
     .stButton > button {
-        min-height: 44px !important;
+        min-height: 48px !important;
+    }
+
+    div[data-testid="column"] {
+        padding: 0 0.5rem !important;
+    }
+}
+
+/* Large desktop */
+@media (min-width: 1200px) {
+    .main .block-container {
+        padding: 2rem 6rem !important;
     }
 }
 
 /* Small mobile adjustments */
 @media (max-width: 480px) {
     h1 {
-        font-size: 1.3rem !important;
+        font-size: 1.5rem !important;
+    }
+
+    h3 {
+        font-size: 1.1rem !important;
     }
 
     div[data-testid="stMetricValue"] {
-        font-size: 1.2rem !important;
+        font-size: 1.25rem !important;
     }
 
     .stAlert {
         font-size: 0.85rem;
+        padding: 0.75rem !important;
+    }
+
+    .stButton > button {
+        min-height: 50px !important;
+    }
+
+    /* Stack columns on very small screens */
+    div[data-testid="column"] {
+        min-width: 100% !important;
+        padding: 0.25rem 0 !important;
     }
 }
 
@@ -197,4 +355,25 @@ header {visibility: hidden;}
         padding-right: max(1rem, env(safe-area-inset-right)) !important;
         padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
     }
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Focus visible for accessibility */
+*:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Loading spinner enhancement */
+.stSpinner > div {
+    border-color: var(--primary) !important;
+}
+
+/* Tabs styling override for shadcn tabs */
+[data-testid="stHorizontalBlock"] iframe {
+    border-radius: 8px;
 }
