@@ -17,6 +17,7 @@ from app.components.warnings import render_warnings, render_limitations
 from app.components.checklist import render_checklist
 from app.components.comparison_results import render_comparison_results
 from app.components.history import init_history, add_to_history, render_history
+from app.components.splash import show_splash_screen
 from app.calculators.on_road_price import calculate_on_road_price
 from app.calculators.depreciation import calculate_total_depreciation
 from app.calculators.fair_value import calculate_complete_fair_value
@@ -134,10 +135,13 @@ def main():
     # Page configuration
     st.set_page_config(
         page_title=APP_TITLE,
-        page_icon="car",
+        page_icon="🚗",
         layout=PAGE_LAYOUT,
         initial_sidebar_state="collapsed",
     )
+
+    # Show splash screen on first load
+    show_splash_screen()
 
     # Initialize history
     init_history()
@@ -165,10 +169,12 @@ def main():
         # Comparison mode
         car1_inputs, car2_inputs = render_comparison_form()
 
+        st.markdown("")  # Spacer
         calculate_clicked = st.button(
-            "Compare Cars",
+            "🔍 Compare Cars",
             type="primary",
             use_container_width=True,
+            key="compare_btn",
         )
 
         st.divider()
@@ -203,10 +209,12 @@ def main():
         # Single car mode
         inputs = render_input_form()
 
+        st.markdown("")  # Spacer
         calculate_clicked = st.button(
-            "Calculate Fair Value",
+            "💰 Calculate Fair Value",
             type="primary",
             use_container_width=True,
+            key="calculate_btn",
         )
 
         st.divider()

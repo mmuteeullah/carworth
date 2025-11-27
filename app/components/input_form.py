@@ -1,6 +1,7 @@
-"""Input form component for Streamlit."""
+"""Input form component with shadcn-ui components."""
 
 import streamlit as st
+import streamlit_shadcn_ui as ui
 from app.data.constants import (
     STATES,
     FUEL_TYPES,
@@ -28,7 +29,7 @@ ADVANCED_DEFAULTS = {
 
 def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict:
     """
-    Render input fields for a single car.
+    Render input fields for a single car using shadcn components.
 
     Args:
         key_prefix: Prefix for widget keys (for comparison mode)
@@ -36,102 +37,97 @@ def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict
 
     Returns dict with all input values.
     """
-    st.subheader(label)
+    st.markdown(f"### {label}")
 
-    # Required inputs
+    # Required inputs - Row 1
     col1, col2 = st.columns(2)
 
     with col1:
-        ex_showroom = st.number_input(
-            "Ex-Showroom Price (Rs.)",
-            min_value=100000,
-            max_value=50000000,
-            value=1500000,
-            step=50000,
-            help="Original ex-showroom price when new",
+        st.markdown("**Ex-Showroom Price (₹)**")
+        ex_showroom_str = ui.input(
+            default_value="1500000",
+            type="number",
+            placeholder="Ex-showroom price when new",
             key=f"{key_prefix}ex_showroom",
         )
+        ex_showroom = int(ex_showroom_str) if ex_showroom_str else 1500000
 
-        year = st.selectbox(
-            "Year of Manufacture",
-            options=YEARS,
-            index=2,
-            help="Manufacturing year of the car",
+        st.markdown("**Year of Manufacture**")
+        year = ui.select(
+            options=[str(y) for y in YEARS],
             key=f"{key_prefix}year",
         )
+        year = int(year) if year else YEARS[2]
 
-        km = st.number_input(
-            "Kilometers Driven",
-            min_value=0,
-            max_value=500000,
-            value=40000,
-            step=1000,
-            help="Total kilometers on odometer",
+        st.markdown("**Kilometers Driven**")
+        km_str = ui.input(
+            default_value="40000",
+            type="number",
+            placeholder="Total km on odometer",
             key=f"{key_prefix}km",
         )
+        km = int(km_str) if km_str else 40000
 
-        fuel_type = st.selectbox(
-            "Fuel Type",
+        st.markdown("**Fuel Type**")
+        fuel_type = ui.select(
             options=FUEL_TYPES,
-            help="Fuel/power type of the car",
             key=f"{key_prefix}fuel_type",
         )
+        fuel_type = fuel_type or FUEL_TYPES[0]
 
     with col2:
-        state = st.selectbox(
-            "Registration State",
+        st.markdown("**Registration State**")
+        state = ui.select(
             options=STATES,
-            index=0,
-            help="State where car was registered",
             key=f"{key_prefix}state",
         )
+        state = state or STATES[0]
 
-        owner = st.selectbox(
-            "Owner Number",
+        st.markdown("**Owner Number**")
+        owner = ui.select(
             options=OWNER_OPTIONS,
-            help="Which owner are you buying from?",
             key=f"{key_prefix}owner",
         )
+        owner = owner or OWNER_OPTIONS[0]
 
-        asking_price = st.number_input(
-            "Asking Price (Rs.)",
-            min_value=50000,
-            max_value=50000000,
-            value=1000000,
-            step=25000,
-            help="Price the seller is asking",
+        st.markdown("**Asking Price (₹)**")
+        asking_price_str = ui.input(
+            default_value="1000000",
+            type="number",
+            placeholder="Seller's asking price",
             key=f"{key_prefix}asking_price",
         )
+        asking_price = int(asking_price_str) if asking_price_str else 1000000
 
-        insurance_status = st.selectbox(
-            "Insurance Status",
+        st.markdown("**Insurance Status**")
+        insurance_status = ui.select(
             options=INSURANCE_OPTIONS,
-            help="Is current insurance valid?",
             key=f"{key_prefix}insurance_status",
         )
+        insurance_status = insurance_status or INSURANCE_OPTIONS[0]
 
     # Custom road tax option
-    use_custom_road_tax = st.checkbox(
-        "Use custom road tax rate",
-        value=False,
-        help="Override the default road tax rate if you know the exact rate for your state/vehicle",
+    st.markdown("")  # Spacer
+    use_custom_road_tax = ui.switch(
+        default_checked=False,
+        label="Use custom road tax rate",
         key=f"{key_prefix}use_custom_road_tax",
     )
 
     custom_road_tax_rate = None
     if use_custom_road_tax:
-        custom_road_tax_rate = st.number_input(
-            "Custom Road Tax Rate (%)",
-            min_value=0.0,
-            max_value=30.0,
-            value=10.0,
-            step=0.5,
-            help="Enter road tax percentage (e.g., 12 for 12%)",
+        st.markdown("**Custom Road Tax Rate (%)**")
+        custom_rate_str = ui.input(
+            default_value="10",
+            type="number",
+            placeholder="e.g., 12 for 12%",
             key=f"{key_prefix}custom_road_tax_rate",
-        ) / 100.0
+        )
+        custom_road_tax_rate = float(custom_rate_str) / 100.0 if custom_rate_str else 0.10
 
     # Advanced options
-    with st.expander("Advanced Options (Edge Cases)", expanded=False):
+    st.markdown("")  # Spacer
+    with st.expander("⚙️ Advanced Options (Edge Cases)", expanded=False):
         st.caption(
             "These adjustments are for special situations. "
             "The basic formula works for 80% of cases."
@@ -140,56 +136,52 @@ def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict
         adv_col1, adv_col2 = st.columns(2)
 
         with adv_col1:
-            brand = st.selectbox(
-                "Brand",
+            st.markdown("**Brand**")
+            brand = ui.select(
                 options=BRAND_OPTIONS,
-                index=BRAND_OPTIONS.index("Other"),
-                help="Affects depreciation: Maruti/Toyota hold value better, Skoda/VW depreciate faster",
                 key=f"{key_prefix}brand",
             )
+            brand = brand or "Other"
 
-            transmission = st.selectbox(
-                "Transmission",
+            st.markdown("**Transmission**")
+            transmission = ui.select(
                 options=TRANSMISSION_OPTIONS,
-                help="DCT/DSG adds +5% depreciation (reliability concerns), AMT adds +2%",
                 key=f"{key_prefix}transmission",
             )
+            transmission = transmission or "Manual"
 
-            body_condition = st.selectbox(
-                "Body Condition",
+            st.markdown("**Body Condition**")
+            body_condition = ui.select(
                 options=CONDITION_OPTIONS,
-                index=1,
-                help="Excellent: -2%, Good: 0%, Average: +2%, Poor: +5%",
                 key=f"{key_prefix}body_condition",
             )
+            body_condition = body_condition or "Good"
 
         with adv_col2:
-            accident_history = st.selectbox(
-                "Accident History",
+            st.markdown("**Accident History**")
+            accident_history = ui.select(
                 options=ACCIDENT_OPTIONS,
-                help="Minor accident: +10%, Major accident: +20%",
                 key=f"{key_prefix}accident_history",
             )
+            accident_history = accident_history or "None"
 
-            service_history = st.selectbox(
-                "Service History",
+            st.markdown("**Service History**")
+            service_history = ui.select(
                 options=SERVICE_OPTIONS,
-                index=2,
-                help="Full authorized: -2%, Partial: 0%, Unknown: +3%",
                 key=f"{key_prefix}service_history",
             )
+            service_history = service_history or "Unknown"
 
-            commercial_use = st.checkbox(
-                "Commercial Use (Taxi/Fleet)",
-                value=False,
-                help="Adds +15% depreciation for taxi/fleet vehicles",
+            st.markdown("")  # Spacer
+            commercial_use = ui.switch(
+                default_checked=False,
+                label="Commercial Use (Taxi/Fleet)",
                 key=f"{key_prefix}commercial_use",
             )
 
-            new_gen_available = st.checkbox(
-                "New Generation Available",
-                value=False,
-                help="Adds +5% if newer model generation has launched",
+            new_gen_available = ui.switch(
+                default_checked=False,
+                label="New Generation Available",
                 key=f"{key_prefix}new_gen_available",
             )
 
@@ -219,8 +211,8 @@ def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict
         "body_condition": body_condition,
         "accident_history": accident_history,
         "service_history": service_history,
-        "commercial_use": commercial_use,
-        "new_gen_available": new_gen_available,
+        "commercial_use": commercial_use or False,
+        "new_gen_available": new_gen_available or False,
         "use_advanced": use_advanced,
     }
 
@@ -231,7 +223,7 @@ def render_input_form() -> dict:
 
     Returns dict with all input values plus 'use_advanced' flag.
     """
-    return _render_car_inputs(key_prefix="single_", label="Car Details")
+    return _render_car_inputs(key_prefix="single_", label="📝 Car Details")
 
 
 def render_comparison_form() -> tuple[dict, dict]:
@@ -243,9 +235,9 @@ def render_comparison_form() -> tuple[dict, dict]:
     col1, col2 = st.columns(2)
 
     with col1:
-        car1 = _render_car_inputs(key_prefix="car1_", label="Car 1")
+        car1 = _render_car_inputs(key_prefix="car1_", label="🚗 Car 1")
 
     with col2:
-        car2 = _render_car_inputs(key_prefix="car2_", label="Car 2")
+        car2 = _render_car_inputs(key_prefix="car2_", label="🚙 Car 2")
 
     return car1, car2
