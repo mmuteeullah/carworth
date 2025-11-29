@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 import streamlit_shadcn_ui as ui
 
-from app.config import APP_TITLE, APP_DESCRIPTION, PAGE_LAYOUT
+from app.config import APP_TITLE, APP_DESCRIPTION, PAGE_LAYOUT, APP_VERSION
 from app.components.input_form import render_input_form, render_comparison_form
 from app.components.results_card import render_results_card
 from app.components.breakdown import render_breakdown
@@ -343,7 +343,7 @@ def main():
     # Footer
     st.divider()
     st.caption(
-        "CarWorth v2.0 | "
+        f"CarWorth v{APP_VERSION} | "
         "For informational purposes only | "
         "Always verify before purchase"
     )
