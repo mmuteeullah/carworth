@@ -102,13 +102,29 @@ def calculate_car_value(inputs: dict) -> dict:
 
 
 def load_css():
-    """Load custom CSS styles and security meta tags."""
-    # Add viewport and security meta tags
+    """Load custom CSS styles, security meta tags, and PWA configuration."""
+    # Add viewport, security meta tags, and PWA configuration
     st.markdown(
         """
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <meta name="referrer" content="strict-origin-when-cross-origin">
         <meta http-equiv="X-Content-Type-Options" content="nosniff">
+
+        <!-- PWA Meta Tags -->
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="apple-mobile-web-app-title" content="CarWorth">
+        <meta name="application-name" content="CarWorth">
+        <meta name="theme-color" content="#4A9EFF">
+        <meta name="msapplication-TileColor" content="#0E1117">
+
+        <!-- PWA Icons -->
+        <link rel="apple-touch-icon" sizes="180x180" href="app/static/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="192x192" href="app/static/icon-192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="app/static/icon-96.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="app/static/icon-48.png">
+        <link rel="manifest" href="app/static/manifest.json">
         """,
         unsafe_allow_html=True,
     )
