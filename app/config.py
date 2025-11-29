@@ -4,7 +4,7 @@
 APP_NAME = "CarWorth"
 APP_TITLE = "CarWorth - Used Car Value Calculator"
 APP_DESCRIPTION = "Calculate the fair market value of any used car in India"
-APP_VERSION = "2.1.0"  # Updated: 2025-11-29 - PWA icons, tax accuracy improvements
+APP_VERSION = "2.1.2"  # Updated: 2025-11-29 - PWA icons via Dockerfile patch
 
 # Page config
 PAGE_ICON = "assets/logo.png"

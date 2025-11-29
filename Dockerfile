@@ -12,6 +12,11 @@ RUN groupadd -r -g 1000 appuser && useradd -r -u 1000 -g appuser appuser
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Patch Streamlit's index.html to add PWA meta tags
+RUN STREAMLIT_PATH=$(python -c "import streamlit; print(streamlit.__path__[0])") && \
+    INDEX_FILE="$STREAMLIT_PATH/static/index.html" && \
+    sed -i 's|<link rel="shortcut icon" href="./favicon.png" />|<link rel="shortcut icon" href="./favicon.png" />\n    <link rel="apple-touch-icon" sizes="180x180" href="/app/static/apple-touch-icon.png" />\n    <link rel="manifest" href="/app/static/manifest.json" />\n    <meta name="apple-mobile-web-app-capable" content="yes" />\n    <meta name="apple-mobile-web-app-title" content="CarWorth" />\n    <meta name="theme-color" content="#4A9EFF" />|' "$INDEX_FILE"
+
 # Copy application code
 COPY app/ ./app/
 COPY .streamlit/ ./.streamlit/
