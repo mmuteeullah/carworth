@@ -81,14 +81,55 @@ def render_breakdown(
         )
 
         road_tax_rate = on_road_data["road_tax_rate"]
+        slab_info = on_road_data.get("slab_info", {})
+        gst_info = on_road_data.get("gst_info", {})
+        gst_breakdown = on_road_data.get("gst_breakdown", {})
 
         _render_row("Ex-Showroom Price", format_currency_lakhs(on_road_data["ex_showroom"]))
+
+        # Show GST breakdown if available
+        if gst_breakdown and gst_breakdown.get("gst_amount"):
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: rgba(147, 51, 234, 0.1);
+                    border-left: 3px solid #9333ea;
+                    padding: 10px 12px;
+                    margin: 8px 0 12px 20px;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                ">
+                    <div style="color: #c4b5fd; font-weight: 600; margin-bottom: 6px;">
+                        🧾 GST Breakdown (included in Ex-Showroom)
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #ddd6fe; margin-bottom: 4px;">
+                        <span>Base Price (before GST)</span>
+                        <span>{format_currency_lakhs(gst_breakdown['base_price'])}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; color: #ddd6fe; margin-bottom: 4px;">
+                        <span>GST ({gst_breakdown['gst_percent']})</span>
+                        <span>{format_currency_lakhs(gst_breakdown['gst_amount'])}</span>
+                    </div>
+                    <div style="color: #a78bfa; font-size: 0.8rem; margin-top: 6px;">
+                        {gst_info.get('category_name', '')} - {gst_info.get('reason', '')}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         _render_row(f"Road Tax ({format_percentage(road_tax_rate)})", format_currency_lakhs(on_road_data["road_tax"]))
         _render_row("Insurance (Estimated)", format_currency_lakhs(on_road_data["insurance"]))
-        _render_row("Fixed Charges (Reg + HSRP + FasTag)", format_currency_lakhs(on_road_data["fixed_charges"]))
+        _render_row("RTO Charges (Reg + HSRP + FasTag + Misc)", format_currency_lakhs(on_road_data["fixed_charges"]))
+        _render_row("Handling/Logistics", format_currency_lakhs(on_road_data.get("handling_charges", 0)))
+
+        # Show TCS if applicable
+        tcs = on_road_data.get("tcs", 0)
+        if tcs > 0:
+            _render_row("TCS (1% above ₹10L)", format_currency_lakhs(tcs))
+
         _render_row("Total On-Road Price", format_currency_lakhs(on_road_data["on_road_price"]), is_total=True)
 
-        # Road tax note
+        # Road tax slab explanation
         is_custom_rate = on_road_data.get("is_custom_rate", False)
         if is_custom_rate:
             default_rate = on_road_data.get("default_road_tax_rate", road_tax_rate)
@@ -104,6 +145,46 @@ def render_breakdown(
                     color: #86efac;
                 ">
                     ✓ Using custom rate: {format_percentage(road_tax_rate)} (Default: {format_percentage(default_rate)})
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        elif slab_info:
+            # Show slab info with explanation
+            slab_range = slab_info.get("slab_range", "")
+            reason = slab_info.get("reason", "")
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: rgba(59, 130, 246, 0.1);
+                    border-left: 3px solid #3b82f6;
+                    padding: 10px 12px;
+                    margin-top: 12px;
+                    border-radius: 4px;
+                    font-size: 0.85rem;
+                ">
+                    <div style="color: #93c5fd; font-weight: 600; margin-bottom: 4px;">
+                        📋 Tax Slab Applied: {slab_range}
+                    </div>
+                    <div style="color: #bfdbfe;">
+                        {reason}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: rgba(245, 158, 11, 0.1);
+                    border-left: 3px solid #f59e0b;
+                    padding: 8px 12px;
+                    margin-top: 8px;
+                    border-radius: 4px;
+                    font-size: 0.8rem;
+                    color: #fcd34d;
+                ">
+                    ⚠️ Rates based on 2024-25 data. Verify with RTO for latest rates.
                 </div>
                 """,
                 unsafe_allow_html=True,

@@ -24,6 +24,8 @@ ADVANCED_DEFAULTS = {
     "service_history": "Unknown",
     "commercial_use": False,
     "new_gen_available": False,
+    "engine_cc": None,
+    "length_mm": None,
 }
 
 
@@ -185,6 +187,48 @@ def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict
                 key=f"{key_prefix}new_gen_available",
             )
 
+        # GST Classification section
+        st.markdown("---")
+        st.markdown("**🧾 GST Classification (Optional)**")
+        st.caption(
+            "Provide engine CC and length to accurately determine GST rate. "
+            "Small cars (Petrol ≤1200cc / Diesel ≤1500cc AND ≤4000mm) get 18% GST, "
+            "larger vehicles get 40% GST."
+        )
+
+        gst_col1, gst_col2 = st.columns(2)
+
+        with gst_col1:
+            st.markdown("**Engine Capacity (CC)**")
+            engine_cc_str = ui.input(
+                default_value="",
+                type="number",
+                placeholder="e.g., 1197",
+                key=f"{key_prefix}engine_cc",
+            )
+            engine_cc = int(engine_cc_str) if engine_cc_str and engine_cc_str.strip() else None
+
+        with gst_col2:
+            st.markdown("**Vehicle Length (mm)**")
+            length_mm_str = ui.input(
+                default_value="",
+                type="number",
+                placeholder="e.g., 3995",
+                key=f"{key_prefix}length_mm",
+            )
+            length_mm = int(length_mm_str) if length_mm_str and length_mm_str.strip() else None
+
+        # Show GST info hint
+        if fuel_type == "Electric":
+            st.info("⚡ Electric vehicles always qualify for 5% GST regardless of size")
+        elif engine_cc and length_mm:
+            from app.data.gst import classify_gst_category
+            gst_info = classify_gst_category(fuel_type, engine_cc, length_mm)
+            if gst_info["category"] == "small":
+                st.success(f"✅ {gst_info['category_name']} - {gst_info['reason']}")
+            else:
+                st.warning(f"⚠️ {gst_info['category_name']} - {gst_info['reason']}")
+
     # Check if any advanced option was changed from default
     use_advanced = (
         brand != ADVANCED_DEFAULTS["brand"]
@@ -214,6 +258,8 @@ def _render_car_inputs(key_prefix: str = "", label: str = "Car Details") -> dict
         "commercial_use": commercial_use or False,
         "new_gen_available": new_gen_available or False,
         "use_advanced": use_advanced,
+        "engine_cc": engine_cc,
+        "length_mm": length_mm,
     }
 
 

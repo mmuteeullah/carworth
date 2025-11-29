@@ -5,20 +5,39 @@ from datetime import datetime
 # Current year for age calculation
 CURRENT_YEAR = datetime.now().year
 
-# Fixed charges (in INR)
+# Fixed charges (in INR) - Updated based on actual dealer data Nov 2025
 FIXED_CHARGES = {
-    "registration": 600,
-    "hsrp": 400,
-    "hypothecation": 1500,  # Only if loan
-    "fastag": 600,
+    "registration": 4000,      # Registration fee (varies by state, avg)
+    "hsrp": 1100,              # High Security Registration Plate
+    "hypothecation": 1500,     # Only if loan
+    "fastag": 600,             # Mandatory FasTag
+    "rto_misc": 2000,          # RTO miscellaneous (forms, smart card, etc.)
 }
 
-# Insurance estimates by price category (in INR)
+# Handling/Logistics charges by price category (dealer charges)
+# These are typically non-negotiable and included in on-road price
+HANDLING_CHARGES = {
+    "budget": 15000,       # < 8 lakh
+    "compact": 18000,      # 8-12 lakh
+    "mid": 22000,          # 12-18 lakh
+    "premium": 25000,      # 18-30 lakh
+    "luxury": 35000,       # > 30 lakh
+}
+
+# TCS (Tax Collected at Source) - 1% on ex-showroom if > 10 lakh
+TCS_THRESHOLD = 1000000  # 10 lakh
+TCS_RATE = 0.01  # 1%
+
+# Insurance estimates by price category (in INR) - Updated Nov 2025
+# Based on comprehensive 1-year insurance with zero depreciation
 INSURANCE_ESTIMATES = {
-    "hatchback": 20000,    # < 10 lakh
-    "sedan": 35000,        # 10-15 lakh
-    "suv": 50000,          # 15-25 lakh
-    "luxury": 80000,       # > 25 lakh
+    "budget": 28000,       # < 6 lakh (hatchbacks like Alto, Swift)
+    "hatchback": 35000,    # 6-10 lakh (i20, Baleno, Punch)
+    "compact_suv": 45000,  # 10-14 lakh (Nexon, Venue, Sonet)
+    "sedan": 55000,        # 14-18 lakh (City, Verna, Creta)
+    "suv": 70000,          # 18-25 lakh (Seltos, Harrier)
+    "premium_suv": 85000,  # 25-40 lakh (Fortuner, XUV700)
+    "luxury": 110000,      # > 40 lakh
 }
 
 # Ownership premium (added to depreciation)

@@ -18,6 +18,7 @@ from app.components.checklist import render_checklist
 from app.components.comparison_results import render_comparison_results
 from app.components.history import init_history, add_to_history, render_history
 from app.components.splash import show_splash_screen
+from app.components.road_tax_page import render_road_tax_page
 from app.calculators.on_road_price import calculate_on_road_price
 from app.calculators.depreciation import calculate_total_depreciation
 from app.calculators.fair_value import calculate_complete_fair_value
@@ -37,6 +38,8 @@ def calculate_car_value(inputs: dict) -> dict:
         state=inputs["state"],
         fuel_type=inputs["fuel_type"],
         custom_road_tax_rate=inputs.get("custom_road_tax_rate"),
+        engine_cc=inputs.get("engine_cc"),
+        length_mm=inputs.get("length_mm"),
     )
 
     depreciation_data = calculate_total_depreciation(
@@ -156,16 +159,21 @@ def main():
 
     # Mode toggle using shadcn tabs
     mode = ui.tabs(
-        options=["Single Car", "Compare Two Cars"],
+        options=["Single Car", "Compare Two Cars", "Road Tax Rates"],
         default_value="Single Car",
         key="mode_selector",
     )
 
     comparison_mode = mode == "Compare Two Cars"
+    road_tax_mode = mode == "Road Tax Rates"
 
     st.markdown("")  # Spacer
 
-    if comparison_mode:
+    if road_tax_mode:
+        # Road Tax Reference page
+        render_road_tax_page()
+
+    elif comparison_mode:
         # Comparison mode
         car1_inputs, car2_inputs = render_comparison_form()
 
@@ -264,7 +272,7 @@ def main():
             st.info("Enter car details and click **Calculate Fair Value** to see results.")
 
     # Below the main columns - additional sections (single car mode only)
-    if st.session_state.get("calculated") and not st.session_state.get("comparison_mode"):
+    if st.session_state.get("calculated") and not st.session_state.get("comparison_mode") and not road_tax_mode:
         st.divider()
 
         # Warnings section
@@ -306,14 +314,15 @@ def main():
 
         st.divider()
 
-    # History section
-    with st.expander("Recent Valuations", expanded=False):
-        render_history()
+    # History section (not shown on road tax page)
+    if not road_tax_mode:
+        with st.expander("Recent Valuations", expanded=False):
+            render_history()
 
-    st.divider()
+        st.divider()
 
-    # Always show limitations
-    render_limitations()
+        # Always show limitations
+        render_limitations()
 
     # Footer
     st.divider()
